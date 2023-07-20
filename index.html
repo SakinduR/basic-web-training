@@ -1,10 +1,175 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Page Title</title>
+    <head>   
+        <title>MY TO DO LIST</title>
+        <link rel="stylesheet" type="text/css" href="styles.css">
     </head>
     <body>
-        <h1>This is a Heading</h1>
-        <p>This is a paragraph.</p>
+        <nav id="navbar">
+            <a href="login.html">Log in</a>
+            <a href="signup.html">Sign up</a>
+            <a href="#" id = "logout">Log out</a>
+          </nav>
+        <form id = "add-activity-form">
+
+        <h2 style="text-align:center;font-size:200%;">
+        <label for="activity">Enter your to do:</label>
+        <input type="text" id="activity" name="activity">
+        <button type="submit">Submit</button>
+        </h2>
+        </form>
+        <ul id = "activity-list" class="cards"></ul>
+        
+
+        <script type="module">
+        
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, addDoc, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-lite.js';
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyDdo2Q57xHZaFMuRNZHgMZnpKcmXHqBirs",
+            authDomain: "mytodos-5793c.firebaseapp.com",
+            projectId: "mytodos-5793c",
+            storageBucket: "mytodos-5793c.appspot.com",
+            messagingSenderId: "649918508166",
+            appId: "1:649918508166:web:c93789a1576491d4f53507",
+            measurementId: "G-L1XBSX718Y"
+        
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth();
+        
+        const activityList = document.getElementById("activity-list");
+        const form = document.getElementById("add-activity-form");
+
+        function renderActivity(_doc){
+            let li = document.createElement('li');
+            let activity = document.createElement('span');
+            let cross = document.createElement('div');
+
+            li.setAttribute('data-id', _doc.id);
+            activity.textContent = _doc.data().activity;
+            cross.textContent = "X";
+
+            li.appendChild(activity);
+            li.appendChild(cross);
+
+            activityList.appendChild(li);
+
+            cross.addEventListener('click', async () => {
+            const documentId = li.getAttribute('data-id');
+
+            try {
+
+                await deleteDoc(doc(db, 'activities', documentId));
+                console.log('Document deleted successfully');
+
+            } catch (error) {
+                console.error('Error deleting document: ', error);
+            }})
+
+        };
+
+        const q = query(collection(db, "activities")    );
+
+        getDocs(q).then((snapshot)=>{
+            snapshot.docs.forEach(doc => {
+                renderActivity(doc);                
+            });
+        })
+
+        form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+
+        const activity = document.getElementById('activity').value;
+
+        
+            try {
+            // Save data to Firestore collection
+            const docRef = await addDoc(collection(db, 'activities'), {
+                activity: activity
+            });
+            console.log('Document written with ID: ', docRef.id);
+
+            // Clear form after successful submission
+            form.reset();
+            } catch (error) {
+            console.error('Error adding document: ', error);
+            }
+        });
+
+
+
+        const logOut = document.getElementById('logout');
+        logOut.addEventListener('click', (e)=>{
+            
+            e.preventDefault();
+            signOut(auth).then(() => {
+            console.log('Sign-out successful.');
+            }).catch((error) => {
+            console.log("error happened.");
+            });
+
+        }
+        )
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in
+                console.log('User is signed in:', user);
+                // Additional actions to perform when the user is signed in
+                user.getIdToken()
+                .then((token) => {
+                    // Use the token for authentication or API requests
+                    console.log('User ID token:', token);
+                })
+                .catch((error) => {
+                    console.error('Error getting user ID token:', error);
+                });
+                
+            } else {
+                // User is signed out
+                console.log('User is signed out');
+                // Additional actions to perform when the user is signed out
+                window.location.href = 'login.html';
+            }
+            });
+
+        
+
+        // let todos = [];
+
+        // function loadTodos() {
+        //     document.getElementById("todos").innerHTML = todos.map(item => (`    
+        //     <div key="${item.id}" style="border: 2px solid powderblue; padding: 30px; margin: 100px">
+        //         <button id="close" style="float:right;"" onclick="closeTodo(${item.id})"><img src="close.jpg" alt="close" style="width:20px;height:20px;"></button>
+        //         <h2>${item.text}</h2>  
+        //         </div>
+        //     `)) 
+        // }
+        // let i=0;
+        // function addTodo() {
+            
+        //     let activity=document.querySelector("#activity");     
+        //     i += 1
+        //     todos.push({
+        //         text: activity.value,
+        //         id: i 
+        //     });
+        //     loadTodos();
+        // }
+
+        // function closeTodo(id) {
+        //     todos = todos.filter(x=>x.id!==id)
+        //     loadTodos();
+        // }
+
+        
+        
+        </script>
     </body>
 </html>
